@@ -1,6 +1,7 @@
 package ai_codebase_assistence.server.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.time.Instant;
@@ -31,6 +32,7 @@ public class User {
     private String avatarUrl;
 
     @Column(name = "access_token", nullable = false, columnDefinition = "TEXT")
+    @JsonIgnore
     private String accessToken;
 
     @Column(name = "token_scope", length = 500)
