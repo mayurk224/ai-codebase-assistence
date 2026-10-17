@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.*;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 
 @Configuration
@@ -45,6 +46,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        // The default entry point answers an unauthenticated API
+                        // call with a 302 to the OAuth2 authorize endpoint. A
+                        // browser fetch follows that hop to github.com, which has
+                        // no CORS headers, so the client only ever sees an opaque
+                        // "Failed to fetch" and cannot tell "signed out" apart
+                        // from "network down". API callers get a real 401.
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                PathPatternRequestMatcher.withDefaults().matcher("/api/**")
+                        )
                 )
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo ->
