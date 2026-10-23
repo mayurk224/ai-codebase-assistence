@@ -16,7 +16,7 @@ export function setAuthCookie(authed: boolean) {
     }
 }
 
-export function useCurrentUser(){
+export function useCurrentUser() {
     return useQuery({
         queryKey: queryKeys.auth.me(),
         // A failed /api/auth/me means there is no valid session; retrying cannot
@@ -35,7 +35,7 @@ export function useCurrentUser(){
     })
 }
 
-export function useLogout(){
+export function useLogout() {
     const queryClient = useQueryClient()
     const router = useRouter()
 
@@ -43,10 +43,14 @@ export function useLogout(){
         mutationFn: async () => {
             await api.logout()
         },
-        onSuccess: () => {
+        onSuccess: async () => {
+            // Stop an in-flight /me request before clearing its cached user. Otherwise
+            // it can finish after logout and make the login page treat stale data as
+            // an authenticated session.
+            await queryClient.cancelQueries({ queryKey: queryKeys.auth.all })
             setAuthCookie(false)
-            queryClient.invalidateQueries({queryKey: queryKeys.auth.all})
-            router.push('/login')
+            queryClient.setQueryData(queryKeys.auth.me(), null)
+            router.replace('/login')
         }
     })
 }
